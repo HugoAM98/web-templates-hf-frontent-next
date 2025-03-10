@@ -12,14 +12,8 @@ import {
   FaArrowRight,
 } from 'react-icons/fa';
 
-const Navbar = () => {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+const Navbar = ({ theme, toggleTheme }) => {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
-
-  const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
-    document.documentElement.classList.toggle('dark');
-  };
 
   const handleMenuToggle = (menu: string) => {
     setOpenMenu(openMenu === menu ? null : menu);
@@ -241,12 +235,15 @@ const Navbar = () => {
 
         {/* Botones */}
         <div className="flex items-center space-x-4">
+          {/* Botón de cambio de tema */}
           <button
             onClick={toggleTheme}
             className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center justify-center"
           >
             {theme === 'light' ? <FaMoon /> : <FaSun />}
           </button>
+
+          {/* Botón de Iniciar Sesión */}
           <Link
             href="/login"
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center"
@@ -254,6 +251,8 @@ const Navbar = () => {
             <FaSignInAlt className="mr-2" />
             <span>Iniciar Sesión</span>
           </Link>
+
+          {/* Botón de Registrarse */}
           <Link
             href="/register"
             className="px-4 py-2 bg-transparent border-2 border-blue-500 text-blue-500 rounded-lg hover:bg-blue-500 hover:text-white flex items-center"
