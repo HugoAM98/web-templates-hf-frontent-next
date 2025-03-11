@@ -2,14 +2,27 @@
 
 import { useDrop } from 'react-dnd';
 import useStore from './../store';
-import { ComponentType } from './../types';
-import { useState } from 'react';
+import { ComponentType, CanvasComponent } from './../types'; // Asegúrate de importar los tipos correctos
+import { useState, useEffect } from 'react';
 import PaymentModal from './../components/PaymentModal';
 
-const CanvasArea = () => {
-  const { components, addComponent } = useStore();
+interface CanvasAreaProps {
+  template?: {
+    components: CanvasComponent[]; // Asegúrate de que la plantilla tenga un array de componentes
+  };
+}
+
+const CanvasArea = ({ template }: CanvasAreaProps) => {
+  const { components, addComponent, setComponents } = useStore(); // Añade setComponents al store
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [pendingComponent, setPendingComponent] = useState<CanvasComponent | null>(null);
+
+  // Efecto para cargar los componentes de la plantilla al inicio
+  useEffect(() => {
+    if (template && template.components) {
+      setComponents(template.components); // Carga los componentes de la plantilla en el estado global
+    }
+  }, [template, setComponents]);
 
   const [, drop] = useDrop(() => ({
     accept: 'component',

@@ -7,6 +7,22 @@ import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
 import { templates } from './data/templates';
 
+// Componente para mostrar las estrellas de valoración
+const RatingStars = ({ rating }: { rating: number }) => {
+  return (
+    <div className="flex items-center">
+      {Array(5)
+        .fill(0)
+        .map((_, index) => (
+          <FaStar
+            key={index}
+            className={`text-${index < rating ? 'yellow-400' : 'gray-300'} mr-1`}
+          />
+        ))}
+    </div>
+  );
+};
+
 const Home = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -47,7 +63,7 @@ const Home = () => {
     const matchesRating = selectedRating === null || template.rating >= selectedRating;
     const matchesSort =
       selectedSort === '' ||
-      (selectedSort === 'popular' && template.isPopular) ||
+      (selectedSort === 'popular' && template.purchases > 50) || // Filtro de popularidad
       (selectedSort === 'rating' && template.rating >= 4);
     return matchesCategory && matchesColors && matchesPrice && matchesServices && matchesRating && matchesSort;
   });
@@ -374,6 +390,12 @@ const Home = () => {
                       alt={template.name}
                       className="w-full h-48 object-cover"
                     />
+                    {/* Etiqueta de popularidad */}
+                    {template.purchases > 50 && (
+                      <div className="absolute top-2 right-2 bg-red-500 text-white text-sm px-3 py-1 rounded-full">
+                        Popular
+                      </div>
+                    )}
                     {/* Overlay y botón Preview */}
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
                       <button
@@ -390,6 +412,8 @@ const Home = () => {
                     <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
                       {template.name}
                     </h2>
+                    {/* Mostrar las estrellas de valoración */}
+                    <RatingStars rating={template.rating} />
                     <p className="text-gray-600 dark:text-gray-300 mb-4">
                       {template.description}
                     </p>
@@ -413,10 +437,10 @@ const Home = () => {
                       </span>
                     </div>
                     <Link href={`/templates/${template.id}`}>
-                    <button className="w-full mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300 cursor-pointer">
-                      Usar Plantilla
-                    </button>
-                  </Link>
+                      <button className="w-full mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300 cursor-pointer">
+                        Usar Plantilla
+                      </button>
+                    </Link>
                   </div>
                 </motion.div>
               ))}

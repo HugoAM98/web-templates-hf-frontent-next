@@ -1,53 +1,96 @@
 'use client';
 
-import { useParams } from 'next/navigation';
-import { templates } from '../../data/templates'; // Importa tus plantillas
+import { useParams, useRouter } from 'next/navigation';
+import { templates } from '../../data/templates';
 import { FaStar, FaCheck, FaArrowRight, FaThumbsUp, FaUsers, FaRocket } from 'react-icons/fa';
-import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
+import { Carousel } from 'react-responsive-carousel';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 
 const TemplateDetail = () => {
-  const { id } = useParams(); // Obtén el ID de la plantilla desde la URL
-  const template = templates.find((t) => t.id === Number(id)); // Busca la plantilla por ID
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0); // Estado para la imagen seleccionada
+  const { id } = useParams();
+  const router = useRouter();
+  const template = templates.find((t) => t.id === Number(id));
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [rating, setRating] = useState(template?.rating || 0);
+  const [comments, setComments] = useState([
+    {
+      id: 1,
+      user: "Juan Pérez",
+      comment: "¡Esta plantilla es increíble! Muy fácil de personalizar.",
+      rating: 5,
+    },
+    {
+      id: 2,
+      user: "Ana Gómez",
+      comment: "El diseño es moderno y atractivo. Mis clientes están impresionados.",
+      rating: 4,
+    },
+    {
+      id: 3,
+      user: "Carlos Ruiz",
+      comment: "La mejor inversión que he hecho para mi sitio web. ¡Altamente recomendada!",
+      rating: 5,
+    },
+  ]);
 
   if (!template) {
     return <div>Plantilla no encontrada</div>;
   }
 
-  // Filtra otras plantillas recomendadas (excluyendo la actual)
   const recommendedTemplates = templates.filter((t) => t.id !== Number(id)).slice(0, 4);
 
-  // Maneja el cambio de imagen en el carrusel
   const handleThumbnailClick = (index) => {
     setSelectedImageIndex(index);
   };
 
+  const handleRatingClick = (newRating) => {
+    setRating(newRating);
+  };
+
+  const handleCommentSubmit = (e) => {
+    e.preventDefault();
+    const newComment = {
+      id: comments.length + 1,
+      user: "Usuario Anónimo",
+      comment: e.target.comment.value,
+      rating: rating,
+    };
+    setComments([...comments, newComment]);
+    e.target.reset();
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-      {/* Navbar y otros componentes comunes pueden ir aquí */}
-
-      {/* Contenido principal */}
       <div className="container mx-auto px-6 py-12">
-        {/* Imagen y detalles */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Carrusel de imágenes de la plantilla */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden"
           >
-            {/* Imagen principal */}
-            <img
-              src={template.images[selectedImageIndex]}
-              alt={template.name}
-              className="w-full h-96 object-cover"
-            />
-
-            {/* Miniaturas */}
+            <div className="relative group">
+              <img
+                src={template.images[selectedImageIndex]}
+                alt={template.name}
+                className="w-full h-96 object-cover"
+              />
+              <div className="absolute inset-0 bg-black bg-opacity-20 group-hover:bg-opacity-40 transition-opacity duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                <button
+                  className="px-6 py-3 bg-white/90 text-gray-800 rounded-lg hover:bg-white transition duration-300"
+                  onClick={() => alert(`Vista previa de: ${template.name}`)}
+                >
+                  Preview
+                </button>
+              </div>
+              {template.purchases > 50 && (
+                <div className="absolute top-2 right-2 bg-red-500 text-white text-sm px-3 py-1 rounded-full">
+                  Popular
+                </div>
+              )}
+            </div>
             <div className="flex justify-center space-x-2 p-4">
               {template.images.map((image, index) => (
                 <button
@@ -67,7 +110,6 @@ const TemplateDetail = () => {
             </div>
           </motion.div>
 
-          {/* Detalles de la plantilla */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -80,8 +122,6 @@ const TemplateDetail = () => {
             <p className="text-gray-600 dark:text-gray-300 mb-6">
               {template.description}
             </p>
-
-            {/* Características */}
             <div className="mb-6">
               <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
                 Características principales
@@ -95,8 +135,6 @@ const TemplateDetail = () => {
                 ))}
               </ul>
             </div>
-
-            {/* Precio y descuento */}
             <div className="mb-6">
               <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
                 Precio
@@ -113,19 +151,15 @@ const TemplateDetail = () => {
                 </span>
               </div>
             </div>
-
-            {/* Botón para usar la plantilla */}
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="w-full px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300 flex items-center justify-center mb-6"
-              onClick={() => alert(`Seleccionaste: ${template.name}`)}
+              onClick={() => router.push(`/editor?templateId=${template.id}`)}
             >
               <span>Usar Plantilla</span>
               <FaArrowRight className="ml-2" />
             </motion.button>
-
-            {/* Beneficios */}
             <div className="mb-6">
               <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
                 ¿Por qué elegir esta plantilla?
@@ -148,7 +182,6 @@ const TemplateDetail = () => {
           </motion.div>
         </div>
 
-        {/* Sección de comentarios */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -159,18 +192,58 @@ const TemplateDetail = () => {
             Comentarios
           </h2>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <textarea
-              className="w-full p-4 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white"
-              rows="4"
-              placeholder="Escribe tu comentario..."
-            ></textarea>
-            <button className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300">
-              Enviar comentario
-            </button>
+            <div className="space-y-6">
+              {comments.map((comment) => (
+                <div key={comment.id} className="border-b border-gray-200 dark:border-gray-700 pb-4">
+                  <div className="flex items-center mb-2">
+                    <span className="font-bold text-gray-800 dark:text-white">{comment.user}</span>
+                    <div className="flex items-center ml-4">
+                      {Array(comment.rating)
+                        .fill(0)
+                        .map((_, i) => (
+                          <FaStar key={i} className="text-yellow-400" />
+                        ))}
+                    </div>
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-300">{comment.comment}</p>
+                </div>
+              ))}
+            </div>
+            <form onSubmit={handleCommentSubmit} className="mt-6">
+              <div className="mb-4">
+                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2">
+                  Puntúa esta plantilla
+                </h3>
+                <div className="flex items-center">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => handleRatingClick(star)}
+                      className={`text-${star <= rating ? 'yellow-400' : 'gray-300'} mr-2`}
+                    >
+                      <FaStar size={24} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <textarea
+                name="comment"
+                className="w-full p-4 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white"
+                rows="4"
+                placeholder="Escribe tu comentario..."
+                required
+              ></textarea>
+              <button
+                type="submit"
+                className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300"
+              >
+                Enviar comentario
+              </button>
+            </form>
           </div>
         </motion.div>
 
-        {/* Plantillas recomendadas */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -182,15 +255,28 @@ const TemplateDetail = () => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {recommendedTemplates.map((recommendedTemplate) => (
-              <div
+              <motion.div
                 key={recommendedTemplate.id}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.3 }}
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer"
+                onClick={() => router.push(`/templates/${recommendedTemplate.id}`)}
               >
-                <img
-                  src={recommendedTemplate.previewImage}
-                  alt={recommendedTemplate.name}
-                  className="w-full h-48 object-cover"
-                />
+                <div className="relative group">
+                  <img
+                    src={recommendedTemplate.previewImage}
+                    alt={recommendedTemplate.name}
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-20 group-hover:bg-opacity-40 transition-opacity duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <button
+                      className="px-6 py-3 bg-white/90 text-gray-800 rounded-lg hover:bg-white transition duration-300"
+                      onClick={() => alert(`Vista previa de: ${recommendedTemplate.name}`)}
+                    >
+                      Preview
+                    </button>
+                  </div>
+                </div>
                 <div className="p-4">
                   <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
                     {recommendedTemplate.name}
@@ -198,19 +284,12 @@ const TemplateDetail = () => {
                   <p className="text-gray-600 dark:text-gray-300 mb-4">
                     {recommendedTemplate.description}
                   </p>
-                  <button
-                    className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300"
-                    onClick={() => alert(`Seleccionaste: ${recommendedTemplate.name}`)}
-                  >
-                    Ver detalles
-                  </button>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </motion.div>
 
-        {/* Botón para ver el listado de plantillas */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -219,7 +298,7 @@ const TemplateDetail = () => {
         >
           <button
             className="px-8 py-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300"
-            onClick={() => alert('Redirigiendo al listado de plantillas')}
+            onClick={() => router.push('/templates')}
           >
             Ver todas las plantillas
           </button>
