@@ -92,6 +92,6 @@ export const templates = [
     category: "E-commerce",
     colors: ["gris", "blanco"],
     services: ["Pasarela de pagos"],
-    purchases: 150, // Número de compras
+    purchases: 150,
   },
 ];

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plantilla Editable</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+      min-height: 100vh;
+    }
+    #app-container {
+      position: relative;
+      min-height: 100vh;
+    }
+    .editable-component {
+      position: absolute;
+      border: 1px dashed transparent;
+      transition: all 0.2s;
+    }
+    .editable-component:hover {
+      border-color: #3b82f6;
+    }
+    .editable-text {
+      cursor: text;
+      padding: 4px;
+    }
+    .editable-image {
+      max-width: 100%;
+      height: auto;
+    }
+    .editable-button {
+      padding: 8px 16px;
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <body>
+    <div id="app-container">
+      dasjdasoljd
+    </div>
+  
+    <script>
+      console.log('Iframe script loaded');
+      
+      function handleComponentDrop(type, x, y, content) {
+        console.log('Recibido componente:', type, 'en', x, y);
+        
+        const container = document.getElementById('app-container');
+        if (!container) {
+          console.error('No se encontró app-container');
+          return;
+        }
+        
+        const newElement = document.createElement('div');
+        newElement.className = 'editable-component';
+        newElement.style.left = `${x}px`;
+        newElement.style.top = `${y}px`;
+        newElement.style.position = 'absolute';
+        
+        switch(type) {
+          case 'Texto':
+            newElement.className += ' editable-text';
+            newElement.textContent = content || 'Nuevo texto';
+            newElement.contentEditable = true;
+            break;
+            
+          case 'Imagen':
+            const img = document.createElement('img');
+            img.className = 'editable-image';
+            img.src = content || 'https://via.placeholder.com/150';
+            newElement.appendChild(img);
+            break;
+            
+          case 'Botón':
+            const button = document.createElement('button');
+            button.className = 'editable-button';
+            button.textContent = content || 'Botón';
+            newElement.appendChild(button);
+            break;
+            
+          case 'Menú':
+            newElement.innerHTML = content || '<nav>Menú de navegación</nav>';
+            break;
+        }
+        
+        container.appendChild(newElement);
+        console.log('Componente añadido:', newElement);
+      }
+  
+      window.addEventListener('message', (event) => {
+        console.log('Mensaje recibido:', event.data);
+        
+        if (event.data && event.data.type === 'ADD_COMPONENT') {
+          handleComponentDrop(
+            event.data.componentType,
+            event.data.x,
+            event.data.y,
+            event.data.content
+          );
+        }
+      });
+      
+      // Notificar al padre que el iframe está listo
+      window.parent.postMessage({ type: 'IFRAME_READY' }, '*');
+    </script>
+  </body>
+  </html>

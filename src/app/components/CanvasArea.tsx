@@ -1,74 +1,113 @@
 'use client';
 
-import { useDrop } from 'react-dnd';
-import useStore from './../store';
-import { ComponentType, CanvasComponent } from './../types'; // Asegúrate de importar los tipos correctos
-import { useState, useEffect } from 'react';
-import PaymentModal from './../components/PaymentModal';
+import { useState, useEffect, useRef } from 'react';
+import NavbarPopup from './NavbarPopup';
 
-interface CanvasAreaProps {
-  template?: {
-    components: CanvasComponent[]; // Asegúrate de que la plantilla tenga un array de componentes
-  };
-}
+const CanvasArea = ({ template, onAddComponent }) => {
+  const iframeRef = useRef(null);
+  const [iframeContent, setIframeContent] = useState('');
+  const [showNavbarPopup, setShowNavbarPopup] = useState(false);
+  const [dropPosition, setDropPosition] = useState(null);
+  const [iframeReady, setIframeReady] = useState(false);
 
-const CanvasArea = ({ template }: CanvasAreaProps) => {
-  const { components, addComponent, setComponents } = useStore(); // Añade setComponents al store
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [pendingComponent, setPendingComponent] = useState<CanvasComponent | null>(null);
-
-  // Efecto para cargar los componentes de la plantilla al inicio
   useEffect(() => {
-    if (template && template.components) {
-      setComponents(template.components); // Carga los componentes de la plantilla en el estado global
+    if (!template) return;
+    
+    const templateUrl = `/templates/template-${template.id}.html`;
+    fetch(templateUrl)
+      .then((response) => response.text())
+      .then((html) => {
+        setIframeContent(html);
+        setIframeReady(false); // Reset ready state when content changes
+      })
+      .catch((error) => console.error('Error loading template:', error));
+  }, [template]);
+
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const handleLoad = () => {
+      setIframeReady(true);
+      console.log('Iframe loaded and ready');
+    };
+
+    iframe.addEventListener('load', handleLoad);
+    return () => iframe.removeEventListener('load', handleLoad);
+  }, [iframeContent]);
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const componentType = e.dataTransfer.getData('componentType');
+    const rect = e.currentTarget.getBoundingClientRect();
+    const position = { 
+      x: e.clientX - rect.left, 
+      y: e.clientY - rect.top 
+    };
+    
+    setDropPosition(position);
+    
+    if (componentType === 'Menú') {
+      setShowNavbarPopup(true);
+    } else {
+      addComponentToIframe(componentType, position);
     }
-  }, [template, setComponents]);
+  };
 
-  const [, drop] = useDrop(() => ({
-    accept: 'component',
-    drop: (item: { type: ComponentType }) => {
-      const newComponent = {
-        id: Date.now().toString(),
-        type: item.type,
-        content: 'Nuevo componente',
-        position: { x: 50, y: 50 + components.length * 60 },
-      };
-
-      if (item.type === 'slider' || item.type === 'form') {
-        setPendingComponent(newComponent);
-        setShowPaymentModal(true);
-      } else {
-        addComponent(newComponent);
+  const addComponentToIframe = (componentType, position, content = '') => {
+    try {
+      const iframe = iframeRef.current;
+      if (!iframe || !iframe.contentWindow) {
+        console.error('Iframe no está listo');
+        return;
       }
-    },
-  }));
-
-  const handlePaymentConfirm = () => {
-    if (pendingComponent) {
-      addComponent(pendingComponent);
-      setShowPaymentModal(false);
+      
+      console.log('Enviando mensaje al iframe:', {
+        type: 'ADD_COMPONENT',
+        componentType,
+        x: position.x,
+        y: position.y,
+        content
+      });
+      
+      iframe.contentWindow.postMessage({
+        type: 'ADD_COMPONENT',
+        componentType,
+        x: position.x,
+        y: position.y,
+        content
+      }, '*');
+    } catch (error) {
+      console.error('Error al enviar mensaje al iframe:', error);
     }
+  };
+
+  const handleNavbarSelect = (navbarType) => {
+    addComponentToIframe('Menú', dropPosition, navbarType.html);
+    setShowNavbarPopup(false);
   };
 
   return (
-    <div
-      ref={drop}
-      className="flex-1 p-8 bg-white"
-      style={{ background: 'linear-gradient(90deg, #f0f0f0 1px, transparent 0), linear-gradient(#f0f0f0 1px, transparent 0)', backgroundSize: '20px 20px' }}
+    <div 
+      className="w-full h-full"
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
     >
-      {components.map((component) => (
-        <div
-          key={component.id}
-          className="absolute p-4 border-2 border-dashed border-blue-200 bg-white"
-          style={{ left: component.position.x, top: component.position.y }}
-        >
-          {component.content}
-        </div>
-      ))}
-      {showPaymentModal && (
-        <PaymentModal
-          onClose={() => setShowPaymentModal(false)}
-          onConfirm={handlePaymentConfirm}
+      <iframe
+        ref={iframeRef}
+        srcDoc={iframeContent}
+        className="w-full h-full border-0"
+        sandbox="allow-scripts allow-same-origin allow-modals allow-forms allow-popups"
+      />
+      
+      {showNavbarPopup && (
+        <NavbarPopup 
+          onSelect={handleNavbarSelect}
+          onClose={() => setShowNavbarPopup(false)}
         />
       )}
     </div>
